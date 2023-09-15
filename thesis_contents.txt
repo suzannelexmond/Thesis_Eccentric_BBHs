@@ -1,0 +1,12 @@
+# Stuff to put in thesis 
+
+Thesis chapters:
+- explain different merger states and how they are generated: Inspiral (Post-Newtonian), Merger (NR), ringdown (Perturbation theory)
+- Why doe we get eccentric waveforms?
+- Surrogate modeling:
+	- how many sample waveforms (m) are needed for the basis? (what is the maximum allowed error?)
+	- Choose your greedy data. Within the parameter domain, choose the m datapoints (eccentricity and mean anomoly) that best approximates the entire waveform.
+	- Choose m time-samples that best define a waveform. This is the emperical data. Use Emperical Interpolation method (EIM)
+	- At every emperical point generate a waveform with one of the greedy data points. (at t=100 ms, generate waveform with ecc=0.3, mean anomoly=1/2pi)
+	- 
+	- 
