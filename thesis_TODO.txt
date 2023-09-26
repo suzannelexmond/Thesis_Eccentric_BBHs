@@ -1,5 +1,3 @@
-- make one big fuction for different lists of values as input (total_mass = [], mass_ratio = [], eccmin = [])
-- update github
 - plot waveforms for different eccentricities
-- look into size of dataset
+- look into size of dataset basis
 - ask secretariat for available room

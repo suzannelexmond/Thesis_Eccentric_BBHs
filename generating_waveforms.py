@@ -8,7 +8,6 @@ from pycbc.waveform import get_td_waveform, get_template_amplitude_norm
 from pycbc.waveform import td_approximants, fd_approximants
 from numba import jit, cuda
 from timeit import default_timer as timer
-from numba.typed import Dict
 from sklearn import preprocessing
 from numba.core.errors import NumbaDeprecationWarning, NumbaWarning
 import warnings
@@ -35,7 +34,7 @@ def SimInspiral(mass1, mass2, eccmin, freqmin, DeltaT = 1./2048., lalDict = lal.
     hc_TS = pycbc.types.timeseries.TimeSeries(hc.data.data, delta_t=hc.deltaT)
     epochTD = hp.epoch.gpsSeconds + hp.epoch.gpsNanoSeconds/1e9
     timesTD = np.arange(hp.data.length)*hp.deltaT + epochTD
-    np.savetxt('Straindata/SimInspiral_{}M_{}ecc.txt'.format((mass1 + mass2), eccmin), np.column_stack([timesTD,hp_TS,hc_TS]))
+    # np.savetxt('Straindata/SimInspiral_{}M_{}ecc.txt'.format((mass1 + mass2), eccmin), np.column_stack([timesTD,hp_TS,hc_TS]))
 
     # print("Absolute value of the maximum amplitude for M_tot = {}, eccmin = {}:".format((mass1 + mass2), eccmin),
     #       "\nh_x = ", abs(max(hc_TS)),
@@ -59,22 +58,16 @@ def SimInspiral_t_over_M(total_mass, mass_ratio, eccmin, freqmin, DeltaT = 1./20
     # time_before_merger = abs(timesTD + timesTD[-1])
 
     t_over_M = timesTD / (lal.MTSUN_SI * total_mass )
-    # hp_TS = preprocessing.normalize([hp_TS])
-    # hc_TS = preprocessing.normalize([hc_TS])
 
-    return t_over_M, hp_TS, hc_TS
+    hp_TS_over_M = hp_TS/total_mass
+    hc_TS_over_M = hc_TS/total_mass
 
+    norm_hp_TS_over_M = (hp_TS_over_M - hp_TS_over_M.min())/ (hp_TS_over_M.max() - hp_TS_over_M.min())
+    norm_hc_TS_over_M = (hc_TS_over_M - hc_TS_over_M.min())/ (hc_TS_over_M.max() - hc_TS_over_M.min())
 
-# start = timer()
-# t_over_M_sol, hp_TS, hc_TS = SimInspiral_t_over_M(30, 1, 0.3, 10.)
-# print(preprocessing.normalize([hp_TS]))
-# print("with GPU:", (timer()-start)/60, ' minutes')    
-      
+    return t_over_M, norm_hp_TS_over_M, norm_hc_TS_over_M
 
-
-
-
-
+# SimInspiral_t_over_M(20, 1, 0.3, 10.)
 
 
 
@@ -86,7 +79,7 @@ def plot_Siminspiral_t_over_M(M_total, mass_ratio, eccmin):
     """
     fig, axs = plt.subplots(2, figsize=(10, 10))
     plt.subplots_adjust(hspace=0.5)
-    fig.suptitle('GW in units of mass')
+    fig.suptitle('Waveform in units of mass')
 
     # # for index, total_mass in enumerate(M_total):
     # for index, ratio in enumerate(mass_ratio):
@@ -112,32 +105,36 @@ def plot_Siminspiral_t_over_M(M_total, mass_ratio, eccmin):
 
                 start = timer()
 
-                t_over_M, hp_TS, hc_TS = SimInspiral_t_over_M(total_mass, ratio, eccentricity, freqmin=100/total_mass)
+                t_over_M, hp_TS_over_M, hc_TS_over_M = SimInspiral_t_over_M(total_mass, ratio, eccentricity, freqmin=50/total_mass)
 
-                axs[0].plot(t_over_M, hp_TS/total_mass, label = 'M = {} $(M_\odot)$, q = {}, e = {}'.format(total_mass, ratio, eccentricity))
+                    
+
+                axs[0].plot(t_over_M, hp_TS_over_M, label = 'M = {} $(M_\odot)$, q = {}, e = {}'.format(total_mass, ratio, eccentricity))
                 axs[0].set_xlim([-7e3, 5e2])
+                # axs[0].set_xlim(-0.25, 0.2)
                 # axs[0].set_ylim([-1e7, 1e2])
                 # axs[0].set_title("total mass = {}, mass ratio = {}, ecc = {}".format(total_mass, ratio, eccentricity))
                 axs[0].legend(loc = 'upper left')
                 axs[0].set_xlabel('t/M')
-                axs[0].set_ylabel('h$_{+}$/M')
+                axs[0].set_ylabel('Normalized h$_{+}$/M')
 
-                axs[1].plot(t_over_M, hc_TS/total_mass, label = 'M = {} $(M_\odot)$, q = {}, e = {}'.format(total_mass, ratio, eccentricity))
+                axs[1].plot(t_over_M, hc_TS_over_M, label = 'M = {} $(M_\odot)$, q = {}, e = {}'.format(total_mass, ratio, eccentricity))
                 axs[1].set_xlim([-7e3, 1e3])
+                # axs[1].set_xlim(-0.25, 0.2)
                 # axs[1].set_ylim([-5e-22, 5e-22])
                 # axs[1].set_title("total mass = {}, mass ratio = {}, ecc = {}".format(total_mass, ratio, eccentricity))
                 axs[1].legend(loc = 'upper left')
                 axs[1].set_xlabel('t/M')
-                axs[1].set_ylabel('h$_{x}$/M')
+                axs[1].set_ylabel('Normalized h$_{x}$/M')
                 print("time GPU:", (timer()-start)/60, ' minutes')
                 print('Strain is calculated')
             
     figname = 'total mass = {}, mass ratio = {}, ecc = {}.png'.format(M_total, mass_ratio, eccmin)
-    fig.savefig('Images/' + figname)
+    # fig.savefig('Images/' + figname)
     print('fig is saved')
     plt.show()
 
-plot_Siminspiral_t_over_M([20, 30], [1], [0.2, 0.6])
+plot_Siminspiral_t_over_M([20], [1], [0.3, 0.6])
 
 
 
