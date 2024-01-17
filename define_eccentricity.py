@@ -134,6 +134,8 @@ def Freq_Amp_Method(total_mass, mass_ratio, eccmin, freqmin, DeltaT = 1./2048., 
 
     return freq_times[freq_apocenters_index], freq_apocenters, freq_times[freq_pericenters_index], freq_pericenters, amp_times[amp_apocenters_index], amp_apocenters, amp_times[amp_pericenters_index], amp_pericenters, freq, amp, freq_times, amp_times
 
+
+
 def Residual_Freq_Amp_Method(total_mass, mass_ratio, eccmin, freqmin):
     #RESIDUAL AMPLITUDE AND FREQUENCY METHOD
 
@@ -157,22 +159,18 @@ def Residual_Freq_Amp_Method(total_mass, mass_ratio, eccmin, freqmin):
 
     
     # Residual frequency 
-    res_freq_times = np.zeros(len(freq_times))
     res_freq = np.zeros(len(freq))
 
     for i in range(len(freq_times)):
-        res_freq_times[i] = freq_times[i]
         res_freq[i] = freq[i] - freq_circ[i]
 
     res_freq_pericenters_index, res_freq_pericenters, res_freq_apocenters_index, res_freq_apocenters = get_peaks_t_over_M(res_freq)
 
 
     # Residual Amplitude
-    res_amp_times = np.zeros(len(amp_times))
     res_amp = np.zeros(len(amp))
 
     for i in range(len(amp_times)):
-        res_amp_times[i] = amp_times[i]
         res_amp[i] = amp[i] - amp_circ[i]
 
     res_amp_pericenters_index, res_amp_pericenters, res_amp_apocenters_index, res_amp_apocenters = get_peaks_t_over_M(res_amp)
@@ -190,9 +188,9 @@ def Residual_Freq_Amp_Method(total_mass, mass_ratio, eccmin, freqmin):
 
     # axs[1].plot(amp_times, amp, label='A$_+$', color='orange' )
     # axs[1].plot(amp_times, amp_circ, label='A$_+^{circ}$', color='red')
-    axs[1].plot(res_amp_times, res_amp, label='Residual Amplitude', color='orange')
-    axs[1].scatter(res_amp_times[res_amp_pericenters_index], res_amp_pericenters, color='blue', s=5 , label='pericenters')
-    axs[1].scatter(res_amp_times[res_amp_apocenters_index], res_amp_apocenters, color='magenta', s=5 , label='apocenters')
+    axs[1].plot(amp_times, res_amp, label='Residual Amplitude', color='orange')
+    axs[1].scatter(amp_times[res_amp_pericenters_index], res_amp_pericenters, color='blue', s=5 , label='pericenters')
+    axs[1].scatter(amp_times[res_amp_apocenters_index], res_amp_apocenters, color='magenta', s=5 , label='apocenters')
     axs[1].set_ylabel('$\Delta$A$_+$')
     axs[1].set_xlim(-20000, 0)
     # axs[1].set_ylim(0, 50)
@@ -203,9 +201,9 @@ def Residual_Freq_Amp_Method(total_mass, mass_ratio, eccmin, freqmin):
 
     # axs[2].plot(freq_times, freq, label='$\omega_+$', color='orange')
     # axs[2].plot(freq_times, freq_circ, label='$\omega_+^{circ}$', color='red')
-    axs[2].plot(res_freq_times, res_freq, label = 'Residual frequency', color='orange')
-    axs[2].scatter(res_freq_times[res_freq_pericenters_index], res_freq_pericenters, color='blue', s=5 , label='pericenters')
-    axs[2].scatter(res_freq_times[res_freq_apocenters_index], res_freq_apocenters, color='magenta', s=5 , label='apocenters')
+    axs[2].plot(freq_times, res_freq, label = 'Residual frequency', color='orange')
+    axs[2].scatter(freq_times[res_freq_pericenters_index], res_freq_pericenters, color='blue', s=5 , label='pericenters')
+    axs[2].scatter(freq_times[res_freq_apocenters_index], res_freq_apocenters, color='magenta', s=5 , label='apocenters')
     axs[2].set_ylabel('$\Delta$f$_+$ = $\Delta\omega_+$/2$\pi$ [Hz]')
     axs[2].set_xlim(-20000, 0)
     axs[2].set_ylim(-50, 50)
@@ -217,16 +215,15 @@ def Residual_Freq_Amp_Method(total_mass, mass_ratio, eccmin, freqmin):
     # figname = 'Residual_Amp_Freq_over_M_zoom.png'
     # fig2.savefig('Images/' + figname)
 
-    return res_freq_times[res_freq_apocenters_index], res_freq_apocenters,res_freq_times[res_freq_pericenters_index], res_freq_pericenters, res_amp_times[res_amp_apocenters_index], res_amp_apocenters, res_amp_times[res_amp_pericenters_index], res_amp_pericenters, res_freq, res_amp
+    return freq_times[res_freq_apocenters_index], res_freq_apocenters, freq_times[res_freq_pericenters_index], res_freq_pericenters, amp_times[res_amp_apocenters_index], res_amp_apocenters, amp_times[res_amp_pericenters_index], res_amp_pericenters, res_freq, res_amp
+
+
 
 def FrequencyFits_Method(total_mass, mass_ratio, eccmin, freqmin):
     # FREQUENCY FITS AND AMPLITUDE FITS METHOD
 
     # Pericenters and Apocenters of frequency and amplitude
     apos_time_freq, apos_freq, peris_time_freq, peris_freq, apos_time_amp, apos_amp, peris_time_amp, peris_amp, freq, amp, freq_times, amp_times = Freq_Amp_Method(total_mass, mass_ratio, eccmin, freqmin)
-
-    fig3, axs = plt.subplots(4, figsize=(10, 10))
-    plt.subplots_adjust(hspace=0.5)
 
    
     def fit_func(t, f0, f1, t_merg):
@@ -236,70 +233,58 @@ def FrequencyFits_Method(total_mass, mass_ratio, eccmin, freqmin):
         A = f0*(t_merg - t_mid)**(-n)
         return A*(t_merg - t)**n
 
-    def fit_func_freq(t, A, n, t_merg):
+    def fit_function(t, A, n, t_merg):
         # Fit guess for frequency
         return A*(t_merg - t)**n 
 
-
-
-    # Fit function to frequency apocenters and epicenters
-    popt_freq_apos, pcov_freq_apos = curve_fit(fit_func_freq, apos_time_freq[3:250], apos_freq[3:250], [350, -0.5, 0], bounds = ([300, -0.5, -0.9], [500, 0, 1]))
-    popt_freq_peris, pcov_freq_peris = curve_fit(fit_func_freq, peris_time_freq[3:250], peris_freq[3:250], [200, -0.5, 0], bounds = ([100, -0.5, -0.9], [400, 0, 1]))
-    print(popt_freq_apos, popt_freq_peris)
+    # Fit the function for frequency apocenters and epicenters
+    params_w_a, covariance_w_a = curve_fit(fit_function, apos_time_freq[3:250], apos_freq[3:250], [350, -0.5, 0], bounds = ([300, -0.5, -0.9], [500, 0, 1]))
+    params_w_p, covariance_w_p = curve_fit(fit_function, peris_time_freq[3:250], peris_freq[3:250], [200, -0.5, 0], bounds = ([100, -0.5, -0.9], [400, 0, 1]))
+    print("Fitted parameters w_apos; A:{}, t_merg:{}, n:{}".format(*params_w_a),
+          "\nFitted parameters w_peris; A:{}, t_merg:{}, n:{}".format(*params_w_p))
     
-    # Fit function to amplitude apocenters and epicenters
-    popt_amp_apos, pcov_amp_apos = curve_fit(fit_func_freq, apos_time_amp[0:250], apos_amp[0:250], [1e-21, -0.3, 0], bounds = ([8.00e-22, -0.5, 0], [5.00e-21, 0, 1]))
-    popt_amp_peris, pcov_amp_peris = curve_fit(fit_func_freq, peris_time_amp[0:250], peris_amp[0:250], [5e-22, -0.1, 0], bounds = ([3.00e-22, -0.5, 0], [1.00e-21, 0, 1]))
-    print(popt_amp_apos, popt_amp_peris)
-
-
-    # Determine U_p(t) = w_22 - w_22^fit_p and U_a(t) = w_22 - w_22^fit_a
-    fit_peris_freq = fit_func_freq(freq_times, *popt_freq_peris)
-    fit_freq_times_peris = np.zeros(len(freq_times))
-    fit_freq_peris = np.zeros(len(freq))
-
-    fit_apos_freq = fit_func_freq(freq_times, *popt_freq_apos)
-    fit_freq_times_apos = np.zeros(len(freq_times))
-    fit_freq_apos = np.zeros(len(freq))
-
-    for i in range(len(freq_times)):
-        fit_freq_times_peris[i] = freq_times[i]
-        fit_freq_peris[i] = freq[i] - fit_peris_freq[i]
-        fit_freq_times_apos[i] = freq_times[i]
-        fit_freq_apos[i] = -(freq[i] - fit_apos_freq[i])
-
-    # fit_freq_pericenters_index, fit_freq_pericenters, fit_freq_apocenters_index, fit_freq_apocenters = get_peaks_t_over_M(fit_freq)
+    
+    # Fit the function for amplitude apocenters and epicenters
+    params_A_a, covariance_A_a = curve_fit(fit_function, apos_time_amp[0:250], apos_amp[0:250], [1e-21, -0.3, 0], bounds = ([8.00e-22, -0.5, 0], [5.00e-21, 0, 1]))
+    params_A_p, covariance_A_p = curve_fit(fit_function, peris_time_amp[0:250], peris_amp[0:250], [5e-22, -0.1, 0], bounds = ([3.00e-22, -0.5, 0], [1.00e-21, 0, 1]))
+    print("Fitted parameters A_apos; A:{}, t_merg:{}, n:{}".format(*params_A_a),
+          "\nFitted parameters A_peris; A:{}, t_merg:{}, n:{}".format(*params_A_p))    
 
 
 
-    # Determine U(t) = A_22 - A_22^fit_p and U(t) = A_22 - A_22^fit_a
-    fit_peris_amp = fit_func_freq(amp_times, *popt_amp_peris)
-    fit_amp_times_peris = np.zeros(len(amp_times))
-    fit_amp_peris = np.zeros(len(amp))
+    def U_fit(t, y, params_fit_a, params_fit_p):
+        # Determine U_(t) for substraction of fit function
+        
+        fit_p = fit_function(t, *params_fit_p)
+        U_p = np.zeros(len(y))
 
-    fit_apos_amp = fit_func_freq(amp_times, *popt_amp_apos)
-    fit_amp_times_apos = np.zeros(len(amp_times))
-    fit_amp_apos = np.zeros(len(amp))
+        fit_a = fit_function(t, *params_fit_a)
+        U_a = np.zeros(len(y))
+
+        for i in range(len(y)):
+            U_p[i] = y[i] - fit_p[i]
+            U_a[i] = -(y[i] - fit_a[i])
+
+        return U_a, U_p
+
+    # U_p(t) = w_22 - w_22^fit_p 
+    U_w_a, U_w_p = U_fit(freq_times, freq, params_w_a, params_w_p)
+    # U_a(t) = w_22 - w_22^fit_a
+    U_A_a, U_A_p = U_fit(amp_times, amp, params_A_a, params_A_p)
 
 
-    for i in range(len(amp_times)):
-        fit_amp_times_peris[i] = amp_times[i]
-        fit_amp_peris[i] = amp[i] - fit_peris_amp[i]
-        fit_amp_times_apos[i] = amp_times[i]
-        fit_amp_apos[i] = -(amp[i] - fit_apos_amp[i])
 
-
-    # pericenters_index_amp , peris_amp_diff = find_peaks(fit_amp_peris, height=0)
-    # pericenters_amp = peris_amp_diff['peak_heights']
+    fig3, axs = plt.subplots(4, figsize=(10, 10))
+    plt.subplots_adjust(hspace=0.5)
 
     # Fit for frequency
-    axs[0].plot(amp_times, fit_func_freq(amp_times, *popt_amp_apos), 'r--', label='fit peri: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt_amp_apos))
-    axs[0].plot(amp_times, fit_func_freq(amp_times, *popt_amp_peris), 'b--', label='fit apo: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt_amp_peris))
+    axs[0].plot(amp_times, fit_function(amp_times, *params_A_a), 'r--', label='fit peri: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(params_A_a))
+    axs[0].plot(amp_times, fit_function(amp_times, *params_A_p), 'b--', label='fit apo: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(params_A_p))
     axs[0].scatter(peris_time_amp[0:250], peris_amp[0:250], color='blue', s=5 , label='pericenters')
     axs[0].scatter(apos_time_amp[0:250], apos_amp[0:250], color='magenta', s=5 , label='apocenters')
     axs[0].set_ylabel('A$_+$')
     axs[0].set_xlim(-200000, 0)
-    axs[0].set_ylim([0, 8e-22])
+    axs[0].set_ylim([0, 6e-22])
     axs[0].set_xlabel('t [M]')
     axs[0].legend(loc='upper left')
     axs[0].set_ylabel('A$_+$')
@@ -307,20 +292,20 @@ def FrequencyFits_Method(total_mass, mass_ratio, eccmin, freqmin):
 
     # Fit for amplitude
     axs[1].plot(freq_times, freq, color='orange')
-    axs[1].plot(freq_times, fit_func_freq(freq_times, *popt_freq_peris), 'b--', label='fit peri: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt_freq_peris))
-    axs[1].plot(freq_times, fit_func_freq(freq_times, *popt_freq_apos), 'r--', label='fit apo: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(popt_freq_apos))
+    axs[1].plot(freq_times, fit_function(freq_times, *params_w_p), 'b--', label='fit peri: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(params_w_p))
+    axs[1].plot(freq_times, fit_function(freq_times, *params_w_a), 'r--', label='fit apo: a=%5.3f, b=%5.3f, c=%5.3f' % tuple(params_w_a))
     axs[1].scatter(peris_time_freq[3:250], peris_freq[3:250], color='blue', s=5 , label='pericenters')
     axs[1].scatter(apos_time_freq[3:250], apos_freq[3:250], color='magenta', s=5 , label='apocenters')
-    axs[1].set_xlim(-200000, 0)
-    axs[1].set_ylim([0, 50])
+    axs[1].set_xlim(-100000, 0)
+    axs[1].set_ylim([0, 40])
     axs[1].set_xlabel('t [M]')
     axs[1].set_ylabel('f$_+$ = $\omega_+$/2$\pi$ [Hz]')
     axs[1].set_title('FrequencyFits Method')
     axs[1].legend(loc='upper left')
 
     # AmplitudeFits Method U(t)
-    axs[2].plot(fit_amp_times_peris, fit_amp_peris, label='U(t) = w$_{22}$ - w$_{22}^{fit_p}$', color='blue')
-    axs[2].plot(fit_amp_times_apos, fit_amp_apos, label='U(t) = -(w$_{22}$ - w$_{22}^{fit_a}$)', color='magenta')
+    axs[2].plot(amp_times, U_A_p, label='U(t) = w$_{22}$ - w$_{22}^{fit_p}$', color='blue')
+    axs[2].plot(amp_times, U_A_a, label='U(t) = -(w$_{22}$ - w$_{22}^{fit_a}$)', color='magenta')
     # axs[2].scatter(fit_amp_times_peris[pericenters_index_amp], peris_amp_diff, color='blue', s=5 , label='pericenters')
     # axs[2].scatter(fit_amp_times_apos[apocenters_index_amp], apos_amp_diff, color='magenta', s=5 , label='apocenters')
     axs[2].set_ylabel('$\Delta$A$_+$')
@@ -331,13 +316,13 @@ def FrequencyFits_Method(total_mass, mass_ratio, eccmin, freqmin):
     axs[2].set_title('AmplitudeFits Method')
 
     # FrequencyFits Method U(t)
-    axs[3].plot(fit_freq_times_peris, fit_freq_peris, label = 'U(t) = A$_{22}$ - A$_{22}^{fit_p}$', color='blue')
-    axs[3].plot(fit_freq_times_apos, fit_freq_apos, label = 'U(t) = -(A$_{22}$ - A$_{22}^{fit_a}$)', color='magenta')
+    axs[3].plot(freq_times, U_w_p, label = 'U(t) = A$_{22}$ - A$_{22}^{fit_p}$', color='blue')
+    axs[3].plot(freq_times, U_w_a, label = 'U(t) = -(A$_{22}$ - A$_{22}^{fit_a}$)', color='magenta')
     # axs[3].scatter(fit_freq_times[fit_freq_pericenters_index], fit_freq_pericenters, color='blue', s=5 , label='pericenters')
     # axs[3].scatter(fit_freq_times[fit_freq_apocenters_index], fit_freq_apocenters, color='magenta', s=5 , label='apocenters')
     axs[3].set_ylabel('$\Delta$f$_+$ = $\Delta\omega_+$/2$\pi$ [Hz]')
     axs[3].set_xlim(-200000, -120000)
-    axs[3].set_ylim(-15, 5)
+    axs[3].set_ylim(-7, 4)
     axs[3].set_xlabel('t [M]')
     axs[3].legend(loc='upper left')
     axs[3].set_title('FrequencyFits Method')
@@ -351,10 +336,9 @@ def FrequencyFits_Method(total_mass, mass_ratio, eccmin, freqmin):
 
 
 
-
-# print(Freq_Amp_Method(50, 4, 0.4, 5))
-# print(Residual_Freq_Amp_Method(50, 4, 0.4, 5))
-FrequencyFits_Method(50, 4, 0.002, 5)
+# Freq_Amp_Method(50, 4, 0.4, 5)
+# Residual_Freq_Amp_Method(50, 4, 0.4, 5)
+FrequencyFits_Method(50, 4, 0.3, 5)
 
 
 
